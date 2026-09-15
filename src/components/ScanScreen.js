@@ -75,17 +75,21 @@ export default function ScanScreen({ navigation }) {
     };
   }, [participantId]);
 
-  const lookupParticipant = async (id) => {
+  const lookupParticipant = async (id, { onDismiss } = {}) => {
     try {
       const participant = await getParticipant(id);
       if (participant) {
         navigation.navigate("Result", { participant });
         return true;
       }
-      Alert.alert("Não encontrado", `Nenhum participante com o ID "${id}".`);
+      Alert.alert("Não encontrado", `Nenhum participante com o ID "${id}".`, [
+        { text: "OK", onPress: onDismiss },
+      ]);
       return false;
     } catch (err) {
-      Alert.alert("Erro", "Não foi possível buscar o participante.");
+      Alert.alert("Erro", "Não foi possível buscar o participante.", [
+        { text: "OK", onPress: onDismiss },
+      ]);
       return false;
     }
   };
@@ -95,8 +99,10 @@ export default function ScanScreen({ navigation }) {
     scanLockedRef.current = true;
 
     const id = (data ?? "").trim();
-    lookupParticipant(id).finally(() => {
-      scanLockedRef.current = false;
+    lookupParticipant(id, {
+      onDismiss: () => {
+        scanLockedRef.current = false;
+      },
     });
   };
 

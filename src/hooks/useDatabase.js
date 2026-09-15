@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { initDatabase, seedDatabase } from "../utils/db";
+import { initDatabase } from "../utils/db";
 
 export function useDatabase() {
   const [isReady, setIsReady] = useState(false);
@@ -11,7 +11,6 @@ export function useDatabase() {
     async function setup() {
       try {
         await initDatabase();
-        await seedDatabase();
         if (isMounted) setIsReady(true);
       } catch (err) {
         if (isMounted) setError(err);

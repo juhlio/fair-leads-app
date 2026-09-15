@@ -1,5 +1,5 @@
 const ROUTE_PATHS = {
-  Home: "/(home)",
+  Home: "/",
   Scan: "/(home)/scan",
   Result: "/(home)/result",
   History: "/history",

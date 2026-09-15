@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getParticipant } from "../utils/db";
 
 const HISTORY_KEY = "@fair-leads:history";
 const EMPTY_STATS = { total: 0, hot: 0, warm: 0, cold: 0 };
+
+const HistoryContext = createContext(null);
 
 function computeStats(entries) {
   return entries.reduce(
@@ -18,7 +20,7 @@ function computeStats(entries) {
   );
 }
 
-export function useHistory() {
+export function HistoryProvider({ children }) {
   const [history, setHistory] = useState([]);
   const [stats, setStats] = useState(EMPTY_STATS);
 
@@ -35,7 +37,13 @@ export function useHistory() {
   }, [loadHistory]);
 
   const addParticipant = useCallback(async (participantId) => {
-    const participant = await getParticipant(participantId);
+    let participant = null;
+    try {
+      participant = await getParticipant(participantId);
+    } catch (err) {
+      participant = null;
+    }
+
     const entry = {
       participantId,
       name: participant?.name ?? null,
@@ -54,17 +62,26 @@ export function useHistory() {
     return entry;
   }, []);
 
-  const getHistory = useCallback(() => history, [history]);
-
-  const getStats = useCallback(() => stats, [stats]);
-
   const clearHistory = useCallback(async () => {
     await AsyncStorage.removeItem(HISTORY_KEY);
     setHistory([]);
     setStats(EMPTY_STATS);
   }, []);
 
-  return { history, stats, addParticipant, getHistory, getStats, clearHistory };
+  const value = useMemo(
+    () => ({ history, stats, addParticipant, clearHistory }),
+    [history, stats, addParticipant, clearHistory]
+  );
+
+  return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;
+}
+
+export function useHistory() {
+  const context = useContext(HistoryContext);
+  if (!context) {
+    throw new Error("useHistory must be used within a HistoryProvider");
+  }
+  return context;
 }
 
 export default useHistory;

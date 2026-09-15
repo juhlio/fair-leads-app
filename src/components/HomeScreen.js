@@ -20,7 +20,6 @@ const COLORS = {
 
 export default function HomeScreen({ navigation, stats }) {
   const safeStats = stats ?? { total: 0, hot: 0, warm: 0, cold: 0 };
-  const hasHistory = safeStats.total > 0;
 
   const statCards = [
     { key: "total", label: "Total", value: safeStats.total, color: COLORS.primary, icon: "👥" },
@@ -59,15 +58,13 @@ export default function HomeScreen({ navigation, stats }) {
           <Text style={styles.scanButtonText}>📷 Escanear QR Code</Text>
         </TouchableOpacity>
 
-        {hasHistory ? (
-          <TouchableOpacity
-            style={styles.historyButton}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate("History")}
-          >
-            <Text style={styles.historyButtonText}>📋 Ver Histórico</Text>
-          </TouchableOpacity>
-        ) : null}
+        <TouchableOpacity
+          style={styles.historyButton}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("History")}
+        >
+          <Text style={styles.historyButtonText}>📋 Ver Histórico</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

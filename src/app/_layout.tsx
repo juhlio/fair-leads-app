@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import { Text, View, StyleSheet } from "react-native";
 
 import { useDatabase } from "@/hooks/useDatabase";
+import { HistoryProvider } from "@/hooks/useHistory";
 
 const COLORS = {
   active: "#1e40af",
@@ -33,28 +34,30 @@ export default function RootLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: COLORS.active,
-        tabBarInactiveTintColor: COLORS.inactive,
-      }}
-    >
-      <Tabs.Screen
-        name="(home)"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text>,
+    <HistoryProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: COLORS.active,
+          tabBarInactiveTintColor: COLORS.inactive,
         }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "Histórico",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="(home)"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text>,
+          }}
+        />
+        <Tabs.Screen
+          name="history"
+          options={{
+            title: "Histórico",
+            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
+          }}
+        />
+      </Tabs>
+    </HistoryProvider>
   );
 }
 

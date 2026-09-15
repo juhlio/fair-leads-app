@@ -48,7 +48,7 @@ export default function ResultScreen({ navigation, route }) {
           <Text style={styles.emptyText}>Nenhum participante selecionado.</Text>
           <TouchableOpacity
             style={[styles.button, styles.homeButton]}
-            onPress={() => navigation.navigate("Home")}
+            onPress={() => navigation.replace("Home")}
           >
             <Text style={styles.homeButtonText}>🏠 Início</Text>
           </TouchableOpacity>
@@ -97,7 +97,7 @@ export default function ResultScreen({ navigation, route }) {
           <TouchableOpacity
             style={[styles.button, styles.scanButton]}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate("Scan")}
+            onPress={() => navigation.replace("Scan")}
           >
             <Text style={styles.scanButtonText}>📷 Próximo</Text>
           </TouchableOpacity>
@@ -105,7 +105,7 @@ export default function ResultScreen({ navigation, route }) {
           <TouchableOpacity
             style={[styles.button, styles.homeButton]}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate("Home")}
+            onPress={() => navigation.replace("Home")}
           >
             <Text style={styles.homeButtonText}>🏠 Início</Text>
           </TouchableOpacity>

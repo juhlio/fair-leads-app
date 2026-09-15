@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Linking,
+  Animated,
   SafeAreaView,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as Haptics from "expo-haptics";
 import { getParticipant } from "../utils/db";
 
 const COLORS = {
@@ -20,6 +23,8 @@ const COLORS = {
   textDark: "#0f172a",
   textLight: "#64748b",
 };
+
+const TOAST_DURATION_MS = 1800;
 
 const MODES = {
   CAMERA: "camera",
@@ -33,8 +38,25 @@ export default function ScanScreen({ navigation }) {
   const [participantId, setParticipantId] = useState("");
   const [preview, setPreview] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [toast, setToast] = useState(null);
   const inputRef = useRef(null);
   const scanLockedRef = useRef(false);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const showToast = (message, onHide) => {
+    setToast({ message });
+    toastOpacity.setValue(1);
+    setTimeout(() => {
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        setToast(null);
+        onHide?.();
+      });
+    }, TOAST_DURATION_MS);
+  };
 
   useEffect(() => {
     if (mode === MODES.CAMERA && permission && !permission.granted && permission.canAskAgain) {
@@ -79,17 +101,16 @@ export default function ScanScreen({ navigation }) {
     try {
       const participant = await getParticipant(id);
       if (participant) {
-        navigation.navigate("Result", { participant });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        navigation.replace("Result", { participant });
         return true;
       }
-      Alert.alert("Não encontrado", `Nenhum participante com o ID "${id}".`, [
-        { text: "OK", onPress: onDismiss },
-      ]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      showToast(`Nenhum participante com o ID "${id}".`, onDismiss);
       return false;
     } catch (err) {
-      Alert.alert("Erro", "Não foi possível buscar o participante.", [
-        { text: "OK", onPress: onDismiss },
-      ]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showToast("Não foi possível buscar o participante.", onDismiss);
       return false;
     }
   };
@@ -97,6 +118,7 @@ export default function ScanScreen({ navigation }) {
   const handleBarcodeScanned = ({ data }) => {
     if (scanLockedRef.current) return;
     scanLockedRef.current = true;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const id = (data ?? "").trim();
     lookupParticipant(id, {
@@ -119,13 +141,19 @@ export default function ScanScreen({ navigation }) {
   };
 
   const handleCancel = () => {
-    navigation.navigate("Home");
+    navigation.replace("Home");
   };
 
   const hasQuery = participantId.trim().length > 0;
 
   return (
     <SafeAreaView style={styles.container}>
+      {toast ? (
+        <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+          <Text style={styles.toastText}>{toast.message}</Text>
+        </Animated.View>
+      ) : null}
+
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.toggleButton, mode === MODES.CAMERA && styles.toggleButtonActive]}
@@ -157,6 +185,20 @@ export default function ScanScreen({ navigation }) {
             <View style={styles.permissionBox}>
               <Text style={styles.permissionText}>Verificando permissão da câmera...</Text>
             </View>
+          ) : !permission.granted && !permission.canAskAgain ? (
+            <View style={styles.permissionBox}>
+              <Text style={styles.permissionText}>
+                O acesso à câmera foi negado. Habilite a permissão de câmera nas configurações do
+                dispositivo para escanear QR codes.
+              </Text>
+              <TouchableOpacity
+                style={[styles.button, styles.searchButton]}
+                activeOpacity={0.85}
+                onPress={() => Linking.openSettings()}
+              >
+                <Text style={styles.searchButtonText}>Abrir configurações</Text>
+              </TouchableOpacity>
+            </View>
           ) : !permission.granted ? (
             <View style={styles.permissionBox}>
               <Text style={styles.permissionText}>
@@ -181,8 +223,6 @@ export default function ScanScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.manualSection}>
-          <Text style={styles.hint}>IDs disponíveis: 001-006</Text>
-
           <TextInput
             ref={inputRef}
             style={styles.input}
@@ -239,6 +279,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  toast: {
+    position: "absolute",
+    top: 16,
+    left: 20,
+    right: 20,
+    backgroundColor: COLORS.danger,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    zIndex: 10,
+  },
+  toastText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    textAlign: "center",
   },
   toggleRow: {
     flexDirection: "row",

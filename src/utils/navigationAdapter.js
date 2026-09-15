@@ -5,18 +5,24 @@ const ROUTE_PATHS = {
   History: "/history",
 };
 
+function buildTarget(name, params) {
+  const pathname = ROUTE_PATHS[name] ?? name;
+  if (params?.participant) {
+    return {
+      pathname,
+      params: { participant: JSON.stringify(params.participant) },
+    };
+  }
+  return pathname;
+}
+
 export function createNavigation(router) {
   return {
     navigate(name, params) {
-      const pathname = ROUTE_PATHS[name] ?? name;
-      if (params?.participant) {
-        router.push({
-          pathname,
-          params: { participant: JSON.stringify(params.participant) },
-        });
-      } else {
-        router.push(pathname);
-      }
+      router.push(buildTarget(name, params));
+    },
+    replace(name, params) {
+      router.replace(buildTarget(name, params));
     },
   };
 }

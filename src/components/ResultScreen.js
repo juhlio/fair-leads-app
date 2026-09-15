@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Animated } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useHistory } from "../hooks/useHistory";
 
 const COLORS = {
-  primary: "#1e40af",
+  primary: "#F5730C",
   background: "#f1f5f9",
   card: "#ffffff",
   textDark: "#0f172a",

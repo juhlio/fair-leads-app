@@ -1,17 +1,11 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  SafeAreaView,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const COLORS = {
-  primary: "#1e40af",
+  primary: "#F5730C",
   success: "#16a34a",
-  warning: "#f97316",
+  warning: "#d97706",
   background: "#f1f5f9",
   card: "#ffffff",
   textDark: "#0f172a",
@@ -34,20 +28,15 @@ export default function HomeScreen({ navigation, stats }) {
         <Text style={styles.subtitle}>Feira Essencial Energia</Text>
       </View>
 
-      <FlatList
-        data={statCards}
-        keyExtractor={(item) => item.key}
-        numColumns={3}
-        scrollEnabled={false}
-        contentContainerStyle={styles.statsList}
-        renderItem={({ item }) => (
-          <View style={[styles.statCard, { borderTopColor: item.color }]}>
+      <View style={styles.statsList}>
+        {statCards.map((item) => (
+          <View key={item.key} style={[styles.statCard, { borderTopColor: item.color }]}>
             <Text style={styles.statIcon}>{item.icon}</Text>
             <Text style={[styles.statValue, { color: item.color }]}>{item.value}</Text>
             <Text style={styles.statLabel}>{item.label}</Text>
           </View>
-        )}
-      />
+        ))}
+      </View>
 
       <View style={styles.actions}>
         <TouchableOpacity
@@ -93,6 +82,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statsList: {
+    flexDirection: "row",
     paddingHorizontal: 12,
     marginTop: 16,
   },

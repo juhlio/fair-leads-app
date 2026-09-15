@@ -1,19 +1,12 @@
 import React from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  SafeAreaView,
-} from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useHistory } from "../hooks/useHistory";
 
 const COLORS = {
-  primary: "#1e40af",
+  primary: "#F5730C",
   success: "#16a34a",
-  warning: "#f97316",
+  warning: "#d97706",
   danger: "#dc2626",
   background: "#f1f5f9",
   card: "#ffffff",

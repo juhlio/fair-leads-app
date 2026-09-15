@@ -5,7 +5,7 @@ import { useDatabase } from "@/hooks/useDatabase";
 import { HistoryProvider } from "@/hooks/useHistory";
 
 const COLORS = {
-  active: "#1e40af",
+  active: "#F5730C",
   inactive: "#94a3b8",
   background: "#f1f5f9",
   textDark: "#0f172a",

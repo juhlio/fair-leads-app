@@ -1,6 +1,8 @@
 import { participants } from "./participantsData";
 
-const MIN_SIMILARITY = 0.72;
+const MIN_NAME_SIMILARITY = 0.72;
+const COMPANY_WEIGHT = 0.5;
+const JOB_TITLE_WEIGHT = 0.25;
 
 function normalize(text) {
   return (text ?? "")
@@ -64,19 +66,45 @@ export function findParticipantByRecognizedText(recognizedLines) {
   const normalizedLines = (recognizedLines ?? []).map(normalize).filter(Boolean);
   if (normalizedLines.length === 0) return null;
 
-  let bestParticipant = null;
-  let bestScore = 0;
-
+  // 1) Todo participante cujo nome bate o suficiente com algum trecho do
+  // texto lido vira candidato. Nome sozinho pode ser ambiguo (varios
+  // "Joao da Silva"), entao ainda nao decide quem e o certo.
+  const candidates = [];
   for (const participant of participants) {
     const fullName = normalize(`${participant.firstName} ${participant.lastName}`);
-    const score = bestLineMatchForName(normalizedLines, fullName);
-    if (score > bestScore) {
-      bestScore = score;
-      bestParticipant = participant;
+    const nameScore = bestLineMatchForName(normalizedLines, fullName);
+    if (nameScore >= MIN_NAME_SIMILARITY) {
+      candidates.push({ participant, nameScore });
     }
   }
 
-  return bestScore >= MIN_SIMILARITY ? bestParticipant : null;
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0].participant;
+
+  // 2) Mais de um nome bateu: usa empresa e cargo (tambem impressos no
+  // cracha) para desempatar e escolher o candidato mais provavel.
+  let best = null;
+  let bestScore = -1;
+
+  for (const candidate of candidates) {
+    const { participant, nameScore } = candidate;
+    const companyScore = participant.company
+      ? bestLineMatchForName(normalizedLines, normalize(participant.company))
+      : 0;
+    const jobTitleScore = participant.jobTitle
+      ? bestLineMatchForName(normalizedLines, normalize(participant.jobTitle))
+      : 0;
+
+    const combinedScore =
+      nameScore + companyScore * COMPANY_WEIGHT + jobTitleScore * JOB_TITLE_WEIGHT;
+
+    if (combinedScore > bestScore) {
+      bestScore = combinedScore;
+      best = participant;
+    }
+  }
+
+  return best;
 }
 
 export function getParticipantById(id) {

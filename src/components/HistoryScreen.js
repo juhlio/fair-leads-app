@@ -14,11 +14,10 @@ const COLORS = {
   textLight: "#64748b",
 };
 
-const CLASSIFICATION_MAP = {
-  hot: { label: "🔥 Quente", bg: "#fee2e2", text: "#dc2626" },
-  warm: { label: "⏱️ Morno", bg: "#fef3c7", text: "#d97706" },
-  cold: { label: "❄️ Frio", bg: "#e0e7ff", text: "#3730a3" },
-};
+function formatScoring(scoring) {
+  if (typeof scoring !== "number") return "Sem nota";
+  return "⭐".repeat(scoring) + "☆".repeat(Math.max(0, 5 - scoring));
+}
 
 function formatTimestamp(timestamp) {
   try {
@@ -60,12 +59,12 @@ export default function HistoryScreen({ navigation }) {
                 <Text style={styles.statLabel}>Total</Text>
               </View>
               <View style={[styles.statCard, { borderTopColor: COLORS.success }]}>
-                <Text style={[styles.statValue, { color: COLORS.success }]}>{stats.hot}</Text>
-                <Text style={styles.statLabel}>Quentes 🔥</Text>
+                <Text style={[styles.statValue, { color: COLORS.success }]}>{stats.priority}</Text>
+                <Text style={styles.statLabel}>Prioritários ⭐</Text>
               </View>
               <View style={[styles.statCard, { borderTopColor: COLORS.warning }]}>
-                <Text style={[styles.statValue, { color: COLORS.warning }]}>{stats.warm}</Text>
-                <Text style={styles.statLabel}>Mornos ⏱️</Text>
+                <Text style={[styles.statValue, { color: COLORS.warning }]}>{stats.unrated}</Text>
+                <Text style={styles.statLabel}>Sem nota</Text>
               </View>
             </View>
           </View>
@@ -75,23 +74,19 @@ export default function HistoryScreen({ navigation }) {
             <Text style={styles.emptyText}>Nenhum participante escaneado ainda</Text>
           </View>
         }
-        renderItem={({ item }) => {
-          const classification = CLASSIFICATION_MAP[item.classification] ?? CLASSIFICATION_MAP.cold;
-          return (
-            <View style={styles.item}>
-              <View style={styles.itemHeader}>
-                <Text style={styles.itemName}>{item.name ?? "Participante desconhecido"}</Text>
-                <View style={[styles.badge, { backgroundColor: classification.bg }]}>
-                  <Text style={[styles.badgeText, { color: classification.text }]}>
-                    {classification.label}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.itemCompany}>{item.company}</Text>
-              <Text style={styles.itemTimestamp}>{formatTimestamp(item.timestamp)}</Text>
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <View style={styles.itemHeader}>
+              <Text style={styles.itemName}>{item.name ?? "Participante desconhecido"}</Text>
+              <Text style={styles.itemStars}>{formatScoring(item.scoring)}</Text>
             </View>
-          );
-        }}
+            {item.company ? <Text style={styles.itemCompany}>{item.company}</Text> : null}
+            <Text style={styles.itemAssigned}>
+              Encaminhar para: {item.assignedTo || "Não atribuído"}
+            </Text>
+            <Text style={styles.itemTimestamp}>{formatTimestamp(item.timestamp)}</Text>
+          </View>
+        )}
       />
 
       <View style={styles.actions}>
@@ -189,19 +184,19 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     marginRight: 8,
   },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "700",
+  itemStars: {
+    fontSize: 13,
   },
   itemCompany: {
     fontSize: 14,
     color: COLORS.textLight,
     marginTop: 4,
+  },
+  itemAssigned: {
+    fontSize: 13,
+    color: COLORS.textDark,
+    marginTop: 6,
+    fontWeight: "600",
   },
   itemTimestamp: {
     fontSize: 12,

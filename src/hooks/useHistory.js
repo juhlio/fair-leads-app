@@ -1,9 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getParticipant } from "../utils/db";
 
 const HISTORY_KEY = "@fair-leads:history";
-const EMPTY_STATS = { total: 0, hot: 0, warm: 0, cold: 0 };
 
 const HistoryContext = createContext(null);
 
@@ -11,14 +9,18 @@ function computeStats(entries) {
   return entries.reduce(
     (acc, entry) => {
       acc.total += 1;
-      if (entry.classification in acc) {
-        acc[entry.classification] += 1;
+      if (typeof entry.scoring === "number" && entry.scoring >= 4) {
+        acc.priority += 1;
+      } else if (entry.scoring == null) {
+        acc.unrated += 1;
       }
       return acc;
     },
-    { ...EMPTY_STATS }
+    { total: 0, priority: 0, unrated: 0 }
   );
 }
+
+const EMPTY_STATS = computeStats([]);
 
 export function HistoryProvider({ children }) {
   const [history, setHistory] = useState([]);
@@ -36,19 +38,14 @@ export function HistoryProvider({ children }) {
     loadHistory();
   }, [loadHistory]);
 
-  const addParticipant = useCallback(async (participantId) => {
-    let participant = null;
-    try {
-      participant = await getParticipant(participantId);
-    } catch (err) {
-      participant = null;
-    }
-
+  const addParticipant = useCallback(async (participant) => {
     const entry = {
-      participantId,
-      name: participant?.name ?? null,
-      company: participant?.company ?? null,
-      classification: participant?.classification ?? null,
+      participantId: participant.id,
+      name: `${participant.firstName} ${participant.lastName}`.trim(),
+      company: participant.company ?? null,
+      jobTitle: participant.jobTitle ?? null,
+      scoring: participant.scoring ?? null,
+      assignedTo: participant.assignedTo || null,
       timestamp: new Date().toISOString(),
     };
 

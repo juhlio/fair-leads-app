@@ -38,11 +38,10 @@
           "imageWidth": 220
         }
       ],
-      "expo-sqlite",
       [
         "expo-camera",
         {
-          "cameraPermission": "Permitir acesso à câmera para escanear QR codes"
+          "cameraPermission": "Permitir acesso à câmera para ler o crachá do participante"
         }
       ]
     ],

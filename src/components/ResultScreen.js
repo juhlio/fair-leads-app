@@ -12,11 +12,13 @@ const COLORS = {
   toastBg: "#16a34a",
 };
 
-const CLASSIFICATION_MAP = {
-  hot: { label: "🔥 Quente", bg: "#fee2e2", text: "#dc2626" },
-  warm: { label: "⏱️ Morno", bg: "#fef3c7", text: "#d97706" },
-  cold: { label: "❄️ Frio", bg: "#e0e7ff", text: "#3730a3" },
-};
+function Stars({ scoring }) {
+  if (typeof scoring !== "number") {
+    return <Text style={styles.noScoring}>Sem avaliação</Text>;
+  }
+  const stars = "⭐".repeat(scoring) + "☆".repeat(Math.max(0, 5 - scoring));
+  return <Text style={styles.stars}>{stars}</Text>;
+}
 
 export default function ResultScreen({ navigation, route }) {
   const participant = route?.params?.participant;
@@ -26,7 +28,7 @@ export default function ResultScreen({ navigation, route }) {
 
   useEffect(() => {
     if (participant?.id) {
-      addParticipant(participant.id);
+      addParticipant(participant);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [participant?.id]);
@@ -58,7 +60,7 @@ export default function ResultScreen({ navigation, route }) {
     );
   }
 
-  const classification = CLASSIFICATION_MAP[participant.classification] ?? CLASSIFICATION_MAP.cold;
+  const fullName = `${participant.firstName} ${participant.lastName}`.trim();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -70,27 +72,41 @@ export default function ResultScreen({ navigation, route }) {
 
       <View style={styles.content}>
         <View style={styles.card}>
-          <View style={[styles.badge, { backgroundColor: classification.bg }]}>
-            <Text style={[styles.badgeText, { color: classification.text }]}>
-              {classification.label}
-            </Text>
-          </View>
+          <Stars scoring={participant.scoring} />
 
-          <Text style={styles.name}>{participant.name}</Text>
+          <Text style={styles.name}>{fullName}</Text>
+
+          {participant.company ? (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Empresa</Text>
+              <Text style={styles.infoValue}>{participant.company}</Text>
+            </View>
+          ) : null}
+
+          {participant.jobTitle ? (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Cargo</Text>
+              <Text style={styles.infoValue}>{participant.jobTitle}</Text>
+            </View>
+          ) : null}
+
+          {participant.email ? (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>E-mail</Text>
+              <Text style={styles.infoValue}>{participant.email}</Text>
+            </View>
+          ) : null}
+
+          {participant.phone ? (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Telefone</Text>
+              <Text style={styles.infoValue}>{participant.phone}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Empresa</Text>
-            <Text style={styles.infoValue}>{participant.company}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Cargo</Text>
-            <Text style={styles.infoValue}>{participant.position}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Contato</Text>
-            <Text style={styles.infoValue}>{participant.contact}</Text>
+            <Text style={styles.infoLabel}>Encaminhar para</Text>
+            <Text style={styles.infoValue}>{participant.assignedTo || "Não atribuído"}</Text>
           </View>
         </View>
 
@@ -154,15 +170,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
-  badge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 999,
+  stars: {
+    fontSize: 24,
     marginBottom: 16,
   },
-  badgeText: {
+  noScoring: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
+    color: COLORS.textLight,
+    marginBottom: 16,
   },
   name: {
     fontSize: 26,

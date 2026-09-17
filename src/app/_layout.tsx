@@ -1,38 +1,14 @@
 import { Tabs } from "expo-router";
-import { Text, View, StyleSheet } from "react-native";
+import { Text } from "react-native";
 
-import { useDatabase } from "@/hooks/useDatabase";
 import { HistoryProvider } from "@/hooks/useHistory";
 
 const COLORS = {
   active: "#F5730C",
   inactive: "#94a3b8",
-  background: "#f1f5f9",
-  textDark: "#0f172a",
-  danger: "#dc2626",
 };
 
 export default function RootLayout() {
-  const { isReady, error } = useDatabase();
-
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>
-          Não foi possível iniciar o banco de dados do app.
-        </Text>
-      </View>
-    );
-  }
-
-  if (!isReady) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.loadingText}>Carregando...</Text>
-      </View>
-    );
-  }
-
   return (
     <HistoryProvider>
       <Tabs
@@ -60,22 +36,3 @@ export default function RootLayout() {
     </HistoryProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.background,
-    paddingHorizontal: 24,
-  },
-  loadingText: {
-    fontSize: 15,
-    color: COLORS.textDark,
-  },
-  errorText: {
-    fontSize: 15,
-    color: COLORS.danger,
-    textAlign: "center",
-  },
-});

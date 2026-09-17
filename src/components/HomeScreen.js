@@ -13,12 +13,12 @@ const COLORS = {
 };
 
 export default function HomeScreen({ navigation, stats }) {
-  const safeStats = stats ?? { total: 0, hot: 0, warm: 0, cold: 0 };
+  const safeStats = stats ?? { total: 0, priority: 0, unrated: 0 };
 
   const statCards = [
     { key: "total", label: "Total", value: safeStats.total, color: COLORS.primary, icon: "👥" },
-    { key: "hot", label: "Quentes 🔥", value: safeStats.hot, color: COLORS.success, icon: "🔥" },
-    { key: "warm", label: "Mornos ⏱️", value: safeStats.warm, color: COLORS.warning, icon: "⏱️" },
+    { key: "priority", label: "Prioritários ⭐", value: safeStats.priority, color: COLORS.success, icon: "⭐" },
+    { key: "unrated", label: "Sem nota", value: safeStats.unrated, color: COLORS.warning, icon: "❔" },
   ];
 
   return (
@@ -44,7 +44,7 @@ export default function HomeScreen({ navigation, stats }) {
           activeOpacity={0.85}
           onPress={() => navigation.navigate("Scan")}
         >
-          <Text style={styles.scanButtonText}>📷 Escanear QR Code</Text>
+          <Text style={styles.scanButtonText}>📷 Ler Crachá</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

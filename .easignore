@@ -1,0 +1,9 @@
+# Por padrao o EAS Build usa as mesmas regras do .gitignore para decidir o
+# que enviar no build. Este arquivo existe para que os dados reais de
+# participantes (que NAO sao versionados no git por conterem dados pessoais)
+# continuem sendo enviados e empacotados no app durante o build.
+node_modules/
+.expo/
+dist/
+web-build/
+.git/

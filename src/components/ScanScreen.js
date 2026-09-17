@@ -1,13 +1,21 @@
 import React, { useRef, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking, Animated } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+  Animated,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import TextRecognition from "@react-native-ml-kit/text-recognition";
 import * as Haptics from "expo-haptics";
-import { getParticipant } from "../utils/db";
+import { findParticipantByRecognizedText } from "../utils/participants";
 
 const COLORS = {
   primary: "#F5730C",
-  success: "#16a34a",
   danger: "#dc2626",
   background: "#f1f5f9",
   card: "#ffffff",
@@ -15,15 +23,16 @@ const COLORS = {
   textLight: "#64748b",
 };
 
-const TOAST_DURATION_MS = 1800;
+const TOAST_DURATION_MS = 2200;
 
 export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [toast, setToast] = useState(null);
-  const scanLockedRef = useRef(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const cameraRef = useRef(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
-  const showToast = (message, onHide) => {
+  const showToast = (message) => {
     setToast({ message });
     toastOpacity.setValue(1);
     setTimeout(() => {
@@ -31,42 +40,35 @@ export default function ScanScreen({ navigation }) {
         toValue: 0,
         duration: 250,
         useNativeDriver: true,
-      }).start(() => {
-        setToast(null);
-        onHide?.();
-      });
+      }).start(() => setToast(null));
     }, TOAST_DURATION_MS);
   };
 
-  const lookupParticipant = async (id, { onDismiss } = {}) => {
+  const handleCapture = async () => {
+    if (isProcessing || !cameraRef.current) return;
+    setIsProcessing(true);
+
     try {
-      const participant = await getParticipant(id);
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
+      const result = await TextRecognition.recognize(photo.uri);
+      const lines = result.blocks.flatMap((block) => block.lines.map((line) => line.text));
+
+      const participant = findParticipantByRecognizedText(lines);
+
       if (participant) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         navigation.replace("Result", { participant });
-        return true;
+        return;
       }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      showToast(`Nenhum participante com o ID "${id}".`, onDismiss);
-      return false;
+      showToast("Nenhum participante encontrado. Tente novamente.");
     } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast("Não foi possível buscar o participante.", onDismiss);
-      return false;
+      showToast("Não foi possível ler o crachá. Tente novamente.");
+    } finally {
+      setIsProcessing(false);
     }
-  };
-
-  const handleBarcodeScanned = ({ data }) => {
-    if (scanLockedRef.current) return;
-    scanLockedRef.current = true;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    const id = (data ?? "").trim();
-    lookupParticipant(id, {
-      onDismiss: () => {
-        scanLockedRef.current = false;
-      },
-    });
   };
 
   const handleCancel = () => {
@@ -90,7 +92,7 @@ export default function ScanScreen({ navigation }) {
           <View style={styles.permissionBox}>
             <Text style={styles.permissionText}>
               O acesso à câmera foi negado. Habilite a permissão de câmera nas configurações do
-              dispositivo para escanear QR codes.
+              dispositivo para ler crachás.
             </Text>
             <TouchableOpacity
               style={[styles.button, styles.searchButton]}
@@ -103,7 +105,7 @@ export default function ScanScreen({ navigation }) {
         ) : !permission.granted ? (
           <View style={styles.permissionBox}>
             <Text style={styles.permissionText}>
-              Precisamos da sua permissão para acessar a câmera e escanear QR codes.
+              Precisamos da sua permissão para acessar a câmera e ler o crachá do participante.
             </Text>
             <TouchableOpacity
               style={[styles.button, styles.searchButton]}
@@ -114,16 +116,31 @@ export default function ScanScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         ) : (
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-            onBarcodeScanned={handleBarcodeScanned}
-          />
+          <>
+            <CameraView ref={cameraRef} style={styles.camera} facing="back" />
+            <View style={styles.hintBox}>
+              <Text style={styles.hintText}>Aponte para o nome no crachá e capture</Text>
+            </View>
+          </>
         )}
       </View>
 
       <View style={styles.footer}>
+        {permission?.granted ? (
+          <TouchableOpacity
+            style={[styles.button, styles.captureButton, isProcessing && styles.buttonDisabled]}
+            activeOpacity={0.85}
+            onPress={handleCapture}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.captureButtonText}>📸 Capturar crachá</Text>
+            )}
+          </TouchableOpacity>
+        ) : null}
+
         <TouchableOpacity
           style={[styles.button, styles.cancelButton]}
           activeOpacity={0.85}
@@ -168,6 +185,22 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
+  hintBox: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    right: 16,
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  hintText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   permissionBox: {
     flex: 1,
     alignItems: "center",
@@ -184,17 +217,29 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
+    gap: 12,
   },
   button: {
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   searchButton: {
     backgroundColor: COLORS.primary,
     marginTop: 20,
   },
   searchButtonText: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  captureButton: {
+    backgroundColor: COLORS.primary,
+  },
+  captureButtonText: {
     color: "#ffffff",
     fontSize: 17,
     fontWeight: "700",
